@@ -165,8 +165,11 @@ namespace CsToJs
             Debug.WriteLine("}};");
         }
 
+        private bool isFirst;
+
         private void ReadClass(string access)
         {
+            isFirst = true;
             var t = this.cur.Text;
             this.MoveNext();
             var name = this.cur.Text;
@@ -180,6 +183,8 @@ namespace CsToJs
             while (this.cur != this.last && this.cur.Text != "}")
                 this.ReadMember("private", false, null);
             this.MoveNext();
+            if (!isFirst) Debug.WriteLine();
+            Debug.WriteLine("    return class;");
             Debug.WriteLine("}})();");
         }
 
@@ -195,8 +200,7 @@ namespace CsToJs
                 || token == "virtual"
                 || token == "override")
             {
-                this.MoveNext();
-                this.ReadMember(access, isStatic, token);
+                throw this.Abort("not supported");
             }
             else if (Converter.IsAccess(token))
             {
@@ -268,46 +272,29 @@ namespace CsToJs
 
         private void ReadMethod(string name, string t, string access, bool isStatic, string opt)
         {
-            Debug.WriteLine();
+            if (isFirst) isFirst = false; else Debug.WriteLine();
             Debug.Write("    ");
-            if (isStatic) Debug.Write("static ");
             if (t == null)
             {
+                if (isStatic) throw this.Abort("static not supported");
                 // constructor
                 this.MoveNext();
-                Debug.Write("function ctor(");
+                Debug.Write("function class(");
                 this.ReadArgs();
                 Debug.WriteLine(")");
             }
             else
             {
-                if (opt == null)
-                    Debug.Write("function");
-                else if (opt == "abstract")
-                    Debug.Write("virtual");
-                else
-                    Debug.Write(opt);
-                Debug.Write(" {0}(", name);
+                Debug.Write("class.");
+                if (!isStatic) Debug.Write("prototype.");
+                Debug.Write("{0} = function(", name);
                 this.MoveNext();
                 this.ReadArgs();
-                if (t == "void")
-                    Debug.Write(")");
-                else
-                    Debug.Write(") : {0}", t);
-                if (opt == "abstract") Debug.Write(" {{}}");
-                Debug.WriteLine();
+                Debug.WriteLine(")");
             }
-            if (opt == "abstract")
-            {
-                if (this.cur.Text != ";") throw this.Abort("must be ';'");
-                this.MoveNext();
-            }
-            else
-            {
-                if (this.cur.Text != "{") throw this.Abort("block required");
-                this.indent = "    ";
-                this.ReadBlock();
-            }
+            if (this.cur.Text != "{") throw this.Abort("block required");
+            this.indent = "    ";
+            this.ReadBlock();
         }
 
         private void ReadArgs()
