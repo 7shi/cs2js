@@ -172,21 +172,15 @@ namespace CsToJs
             var name = this.cur.Text;
             this.MoveNext();
             Debug.WriteLine();
-            Debug.Write("{0} {1}", t, name);
-            if (this.cur.Text == ":")
-            {
-                this.MoveNext();
-                Debug.Write(" : {0}", this.cur.Text);
-                this.MoveNext();
-            }
-            Debug.WriteLine();
+            Debug.WriteLine("var {0} = (function()", name);
+            if (this.cur.Text == ":") throw this.Abort("can not inherit");
             if (this.cur.Text != "{") throw this.Abort("must be '{'");
             Debug.WriteLine("{{");
             this.MoveNext();
             while (this.cur != this.last && this.cur.Text != "}")
                 this.ReadMember("private", false, null);
             this.MoveNext();
-            Debug.WriteLine("}}");
+            Debug.WriteLine("}})();");
         }
 
         private void ReadMember(string access, bool isStatic, string opt)
