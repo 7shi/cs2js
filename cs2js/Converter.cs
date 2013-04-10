@@ -670,11 +670,11 @@ namespace CsToJs
             this.MoveNext();
             if (this.cur.Text != "(") throw this.Abort("argument required");
             this.MoveNext();
-            Debug.Write("\\(");
+            Debug.Write("function(");
             while (this.cur.Text != ")")
             {
                 var tn = this.ReadDecl(true);
-                Debug.Write("{0} : {1}", tn.Name, tn.Type);
+                Debug.Write("{0}", tn.Name);
                 if (this.cur.Text == ",")
                 {
                     Debug.Write(", ");
@@ -682,7 +682,7 @@ namespace CsToJs
                 }
             }
             this.MoveNext();
-            Debug.WriteLine(") =>");
+            Debug.WriteLine(")");
             this.ReadBlock();
             Debug.Write(this.indent);
         }
