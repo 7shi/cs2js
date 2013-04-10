@@ -133,21 +133,21 @@ namespace CsToJs
             var name = this.cur.Text;
             this.MoveNext();
             Debug.WriteLine();
-            Debug.WriteLine("struct {0}", name);
+            Debug.WriteLine("var {0} =", name);
             if (this.cur.Text != "{") throw this.Abort("must be '{'");
             Debug.WriteLine("{{");
             this.MoveNext();
             var v = 0;
             while (this.cur != this.last && this.cur.Text != "}")
             {
-                string val = "(" + name + ")" + v;
+                string val = v.ToString();
                 var id = this.cur.Text;
                 this.MoveNext();
                 if (this.cur.Text == "=")
                 {
                     this.MoveNext();
                     if (Int32.TryParse(this.cur.Text, out v))
-                        val = "(" + name + ")" + v;
+                        val = v.ToString();
                     else
                     {
                         val = this.cur.Text;
@@ -155,14 +155,14 @@ namespace CsToJs
                     }
                     this.MoveNext();
                 }
-                Debug.WriteLine("    static function get_{0} {{ return {1}; }}",
+                Debug.WriteLine("    {0}: {1},",
                     id, val);
                 dic.Add(id, v);
                 v = v + 1;
                 if (this.cur.Text == ",") this.MoveNext();
             }
             this.MoveNext();
-            Debug.WriteLine("}}");
+            Debug.WriteLine("}};");
         }
 
         private void ReadClass(string access)
