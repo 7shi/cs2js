@@ -275,6 +275,7 @@ namespace CsToJs
         {
             if (this.isFirst) this.isFirst = false; else Debug.WriteLine();
             Debug.Write("    ");
+            string appendix = "";
             if (t == null)
             {
                 if (this.hasCtor) throw this.Abort("multiple constructor not supported");
@@ -294,10 +295,11 @@ namespace CsToJs
                 this.MoveNext();
                 this.ReadArgs();
                 Debug.WriteLine(")");
+                appendix = ";";
             }
             if (this.cur.Text != "{") throw this.Abort("block required");
             this.indent = "    ";
-            this.ReadBlock();
+            this.ReadBlock(appendix);
         }
 
         private void ReadArgs()
@@ -346,7 +348,7 @@ namespace CsToJs
             Debug.Write(tn.Name);
         }
 
-        private void ReadBlockOrSentence()
+        private void ReadBlockOrSentence(string appendix)
         {
             if (this.cur.Text == ";")
             {
@@ -354,7 +356,7 @@ namespace CsToJs
                 Debug.Write("()");
             }
             else if (this.cur.Text == "{")
-                this.ReadBlock();
+                this.ReadBlock(appendix);
             else
             {
                 var bak = this.indent;
@@ -364,7 +366,7 @@ namespace CsToJs
             }
         }
 
-        private void ReadBlock()
+        private void ReadBlock(string appendix)
         {
             if (this.cur.Text != "{") throw this.Abort("block required");
             var bak = this.indent;
@@ -375,7 +377,7 @@ namespace CsToJs
                 this.ReadSentence();
             this.MoveNext();
             this.indent = bak;
-            Debug.WriteLine("{0}{1}", indent, "}");
+            Debug.WriteLine("{0}{1}{2}", indent, "}", appendix);
         }
 
         private void ReadSentence()
@@ -525,7 +527,7 @@ namespace CsToJs
             this.MoveNext();
             this.ReadExpr(false);
             Debug.WriteLine(")");
-            this.ReadBlockOrSentence();
+            this.ReadBlockOrSentence("");
             if (this.cur.Text == "else")
             {
                 this.MoveNext();
@@ -539,7 +541,7 @@ namespace CsToJs
                 else
                 {
                     Debug.WriteLine("else");
-                    this.ReadBlockOrSentence();
+                    this.ReadBlockOrSentence("");
                 }
             }
         }
@@ -561,7 +563,7 @@ namespace CsToJs
             else
             {
                 Debug.WriteLine();
-                this.ReadBlockOrSentence();
+                this.ReadBlockOrSentence("");
             }
         }
 
@@ -578,7 +580,7 @@ namespace CsToJs
             Debug.Write("; ");
             this.ReadExpr(false);
             Debug.WriteLine(")");
-            this.ReadBlockOrSentence();
+            this.ReadBlockOrSentence("");
         }
 
         private void ReadForEach()
@@ -595,7 +597,7 @@ namespace CsToJs
             this.MoveNext();
             this.ReadExpr(false);
             Debug.WriteLine(")");
-            this.ReadBlockOrSentence();
+            this.ReadBlockOrSentence("");
         }
 
         private void ReadSwitch()
@@ -683,7 +685,7 @@ namespace CsToJs
             }
             this.MoveNext();
             Debug.WriteLine(")");
-            this.ReadBlock();
+            this.ReadBlock("");
             Debug.Write(this.indent);
         }
 
