@@ -187,6 +187,8 @@ namespace CsToJs
                 this.ReadMember(false, null);
             this.MoveNext();
             if (!this.isFirst) Debug.WriteLine();
+            if (!this.hasCtor)
+                Debug.WriteLine("    function {0}() {{}}", this.cname);
             Debug.WriteLine("    return {0};", this.cname);
             Debug.WriteLine("}})();");
         }
