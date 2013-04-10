@@ -104,29 +104,29 @@ namespace CsToJs
                 this.MoveNext();
             this.MoveNext();
             while (this.cur != this.last && this.cur.Text != "}")
-                this.ReadNamespaceInternal("private");
+                this.ReadNamespaceInternal();
             this.MoveNext();
         }
 
-        private void ReadNamespaceInternal(string access)
+        private void ReadNamespaceInternal()
         {
             var token = this.cur.Text;
             if (Converter.IsAccess(token))
             {
                 this.MoveNext();
-                this.ReadNamespaceInternal(token);
+                this.ReadNamespaceInternal();
             }
             else if (token == "class" || token == "struct")
-                this.ReadClass(access);
+                this.ReadClass();
             else if (token == "enum")
-                this.ReadEnum(access);
+                this.ReadEnum();
             else if (token == "abstract" || token == "partial")
                 this.MoveNext();
             else
                 throw this.Abort("not supported");
         }
 
-        private void ReadEnum(string access)
+        private void ReadEnum()
         {
             var dic = new Dictionary<string, int>();
             this.MoveNext();
@@ -167,7 +167,7 @@ namespace CsToJs
 
         private bool isFirst;
 
-        private void ReadClass(string access)
+        private void ReadClass()
         {
             isFirst = true;
             var t = this.cur.Text;
