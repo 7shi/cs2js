@@ -166,12 +166,13 @@ namespace CsToJs
             Debug.WriteLine("}};");
         }
 
-        private bool isFirst;
+        private bool isFirst, hasCtor;
         private string cname;
 
         private void ReadClass()
         {
             this.isFirst = true;
+            this.hasCtor = false;
             var t = this.cur.Text;
             this.MoveNext();
             this.cname = this.cur.Text;
@@ -274,6 +275,8 @@ namespace CsToJs
             Debug.Write("    ");
             if (t == null)
             {
+                if (this.hasCtor) throw this.Abort("multiple constructor not supported");
+                this.hasCtor = true;
                 if (isStatic) throw this.Abort("static not supported");
                 // constructor
                 this.MoveNext();
