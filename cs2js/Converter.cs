@@ -167,16 +167,17 @@ namespace CsToJs
         }
 
         private bool isFirst;
+        private string cname;
 
         private void ReadClass()
         {
             this.isFirst = true;
             var t = this.cur.Text;
             this.MoveNext();
-            var name = this.cur.Text;
+            this.cname = this.cur.Text;
             this.MoveNext();
             Debug.WriteLine();
-            Debug.WriteLine("var {0} = (function()", name);
+            Debug.WriteLine("var {0} = (function()", this.cname);
             if (this.cur.Text == ":") throw this.Abort("can not inherit");
             if (this.cur.Text != "{") throw this.Abort("must be '{'");
             Debug.WriteLine("{{");
@@ -185,7 +186,7 @@ namespace CsToJs
                 this.ReadMember(false, null);
             this.MoveNext();
             if (!this.isFirst) Debug.WriteLine();
-            Debug.WriteLine("    return class;");
+            Debug.WriteLine("    return {0};", this.cname);
             Debug.WriteLine("}})();");
         }
 
@@ -276,13 +277,13 @@ namespace CsToJs
                 if (isStatic) throw this.Abort("static not supported");
                 // constructor
                 this.MoveNext();
-                Debug.Write("function class(");
+                Debug.Write("function {0}(", this.cname);
                 this.ReadArgs();
                 Debug.WriteLine(")");
             }
             else
             {
-                Debug.Write("class.");
+                Debug.Write("{0}.", this.cname);
                 if (!isStatic) Debug.Write("prototype.");
                 Debug.Write("{0} = function(", name);
                 this.MoveNext();
