@@ -170,7 +170,7 @@ namespace CsToJs
 
         private void ReadClass()
         {
-            isFirst = true;
+            this.isFirst = true;
             var t = this.cur.Text;
             this.MoveNext();
             var name = this.cur.Text;
@@ -184,7 +184,7 @@ namespace CsToJs
             while (this.cur != this.last && this.cur.Text != "}")
                 this.ReadMember("private", false, null);
             this.MoveNext();
-            if (!isFirst) Debug.WriteLine();
+            if (!this.isFirst) Debug.WriteLine();
             Debug.WriteLine("    return class;");
             Debug.WriteLine("}})();");
         }
@@ -273,7 +273,7 @@ namespace CsToJs
 
         private void ReadMethod(string name, string t, string access, bool isStatic, string opt)
         {
-            if (isFirst) isFirst = false; else Debug.WriteLine();
+            if (this.isFirst) this.isFirst = false; else Debug.WriteLine();
             Debug.Write("    ");
             if (t == null)
             {
@@ -341,7 +341,7 @@ namespace CsToJs
             var tn = this.ReadDecl(true);
             if (tn.Type == null)
                 throw this.Abort("missing type or name");
-            Debug.Write(tn.Name + " : " + tn.Type);
+            Debug.Write(tn.Name);
         }
 
         private void ReadBlockOrSentence()
