@@ -13,19 +13,25 @@ var TypeName = (function()
 
 var Converter = (function()
 {
+	var spc = "    ";
+	Converter.noop = [ "??", "?:", "?", ":" ];
+	Converter.noop.Contains = function(s)
+	{
+		for (var i = 0; i < this.length; i++)
+			if (s == this[i])
+				return true;
+		return false;
+	};
+
 	function Converter(tokens)
 	{
-		if (Converter.noop == null)
-		{
-			Converter.noop = [ "??", "?:", "?", ":" ];
-		}
-		this.tokens = tokens.Where(function(t)
-		{
-			return !t.CanOmit();
-		}
-		).ToArray();
+		this.pos = 0;
+		this.tokens = [];
+		for (var i = 0; i < tokens.length; i++)
+			if (!tokens[i].CanOmit())
+				this.tokens.push(tokens[i]);
 		this.last = new Token("", TokenType.None, 0, 0);
-		if (this.tokens.Length > 0)
+		if (this.tokens.length > 0)
 			this.cur = this.tokens[0];
 		else
 			this.cur = this.last;
@@ -33,10 +39,10 @@ var Converter = (function()
 
 	Converter.prototype.MoveNext = function()
 	{
-		if (this.pos < this.tokens.Length)
+		if (this.pos < this.tokens.length)
 		{
 			this.pos = this.pos + 1;
-			if (this.pos < this.tokens.Length)
+			if (this.pos < this.tokens.length)
 				this.cur = this.tokens[this.pos];
 			else
 				this.cur = this.last;
@@ -112,42 +118,37 @@ var Converter = (function()
 
 	Converter.prototype.ReadEnum = function()
 	{
-		var dic = new Dictionary<string, int >();
+		var dic = {};
 		this.MoveNext();
 		var name = this.cur.Text;
 		this.MoveNext();
 		Debug.WriteLine();
-		Debug.WriteLine("var {0} =", name);
+		Debug.WriteLine("var " + name + " =");
 		if (this.cur.Text != "{")
 			throw this.Abort("must be '{'");
-		Debug.WriteLine("{{");
+		Debug.WriteLine("{");
 		this.MoveNext();
 		var v = 0;
 		while (this.cur != this.last && this.cur.Text != "}")
 		{
-			stringval = v.ToString();
+			var val = v.toString();
 			var id = this.cur.Text;
 			this.MoveNext();
 			if (this.cur.Text == "=")
 			{
 				this.MoveNext();
-				if (Int32.TryParse(this.cur.Text, outv))
-					val = v.ToString();
-				else
-				{
-					val = this.cur.Text;
-					v = dic[val];
-				}
+				val = this.cur.Text;
+				if (!isnum(val)) v = dic[val];
 				this.MoveNext();
 			}
-			Debug.WriteLine("	 {0}: {1},", id, val);
-			dic.Add(id, v);
-			v = v + 1;
+			Debug.WriteLine(spc + id + ": " + val + ",");
+			dic[id] = v;
+			v++;
 			if (this.cur.Text == ",")
 				this.MoveNext();
 		}
 		this.MoveNext();
-		Debug.WriteLine("}};");
+		Debug.WriteLine("};");
 	};
 
 	Converter.prototype.ReadClass = function()
@@ -159,12 +160,12 @@ var Converter = (function()
 		this.cname = this.cur.Text;
 		this.MoveNext();
 		Debug.WriteLine();
-		Debug.WriteLine("var {0} = (function()", this.cname);
+		Debug.WriteLine("var " + this.cname + " = (function()");
 		if (this.cur.Text == ":")
 			throw this.Abort("can not inherit");
 		if (this.cur.Text != "{")
 			throw this.Abort("must be '{'");
-		Debug.WriteLine("{{");
+		Debug.WriteLine("{");
 		this.MoveNext();
 		while (this.cur != this.last && this.cur.Text != "}")
 			this.ReadMember(false, null);
@@ -172,9 +173,9 @@ var Converter = (function()
 		if (!this.isFirst)
 			Debug.WriteLine();
 		if (!this.hasCtor)
-			Debug.WriteLine("	 function {0}() {{}}", this.cname);
-		Debug.WriteLine("	 return {0};", this.cname);
-		Debug.WriteLine("}})();");
+			Debug.WriteLine(spc + "function " + this.cname + "() {}");
+		Debug.WriteLine(spc + "return " + this.cname + ";");
+		Debug.WriteLine("})();");
 	};
 
 	Converter.prototype.ReadMember = function(isStatic, opt)
@@ -244,7 +245,9 @@ var Converter = (function()
 
 	Converter.IsPrimitive = function(t)
 	{
-		return t == "bool" || t == "sbyte" || t == "byte" || t == "char" || t == "short" || t == "ushort" || t == "int" || t == "uint";
+		return t == "bool" || t == "sbyte" || t == "byte" ||
+			t == "char" || t == "short" || t == "ushort" ||
+			t == "int" || t == "uint";
 	};
 
 	Converter.prototype.ReadMethod = function(name, t, isStatic, opt)
@@ -253,7 +256,7 @@ var Converter = (function()
 			this.isFirst = false;
 		else
 			Debug.WriteLine();
-		Debug.Write("	 ");
+		Debug.Write(spc);
 		stringappendix = "";
 		if (t == null)
 		{
@@ -263,16 +266,16 @@ var Converter = (function()
 			if (isStatic)
 				throw this.Abort("static not supported");
 			this.MoveNext();
-			Debug.Write("function {0}(", this.cname);
+			Debug.Write("function " + this.cname + "(");
 			this.ReadArgs();
 			Debug.WriteLine(")");
 		}
 		else
 		{
-			Debug.Write("{0}.", this.cname);
+			Debug.Write(this.cname + ".");
 			if (!isStatic)
 				Debug.Write("prototype.");
-			Debug.Write("{0} = function(", name);
+			Debug.Write(name + " = function(");
 			this.MoveNext();
 			this.ReadArgs();
 			Debug.WriteLine(")");
@@ -280,7 +283,7 @@ var Converter = (function()
 		}
 		if (this.cur.Text != "{")
 			throw this.Abort("block required");
-		this.indent = "	   ";
+		this.indent = spc;
 		this.ReadBlock(appendix);
 	};
 
@@ -300,25 +303,20 @@ var Converter = (function()
 
 	Converter.prototype.ReadDecl = function(arg)
 	{
-		var list = new List<string>();
+		var list = [];
 		var seps = "(){};=";
 		if (arg)
 			seps = seps + ",";
-		while (this.cur.Text.Length > 1 || seps.IndexOf(this.cur.Text) < 0)
+		while (this.cur.Text.length > 1 || seps.indexOf(this.cur.Text) < 0)
 		{
-			list.Add(this.cur.Text);
+			list.push(this.cur.Text);
 			this.MoveNext();
 		}
-		if (list.Count < 1)
+		if (list.length < 1)
 			throw this.Abort("missing type or name");
-		var last = list.Count - 1;
-		var name = list[last];
-		list.RemoveAt(last);
-		if (list.Count > 0)
-		{
-			var t = String.Concat(list.ToArray());
-			return new TypeName(t, name);
-		}
+		var name = list.pop();
+		if (list.length > 0)
+			return new TypeName(list.join(""), name);
 		else
 			return new TypeName(null, name);
 	};
@@ -343,7 +341,7 @@ var Converter = (function()
 		else
 		{
 			var bak = this.indent;
-			this.indent = this.indent + "	 ";
+			this.indent += spc;
 			this.ReadSentence();
 			this.indent = bak;
 		}
@@ -354,14 +352,14 @@ var Converter = (function()
 		if (this.cur.Text != "{")
 			throw this.Abort("block required");
 		var bak = this.indent;
-		Debug.WriteLine("{0}{1}", indent, "{");
-		this.indent = this.indent + "	 ";
+		Debug.WriteLine(this.indent + "{");
+		this.indent += spc;
 		this.MoveNext();
 		while (this.cur != this.last && this.cur.Text != "}")
 			this.ReadSentence();
 		this.MoveNext();
 		this.indent = bak;
-		Debug.WriteLine("{0}{1}{2}", indent, "}", appendix);
+		Debug.WriteLine(this.indent + "}" + appendix);
 	};
 
 	Converter.prototype.ReadSentence = function()
@@ -369,7 +367,7 @@ var Converter = (function()
 		switch (this.cur.Text)
 		{
 		case "return":
-			Debug.Write("{0}return", indent);
+			Debug.Write(this.indent + "return");
 			this.MoveNext();
 			if (this.cur.Text == ";")
 				this.MoveNext();
@@ -419,10 +417,10 @@ var Converter = (function()
 		if (array)
 		{
 			seps = ",}";
-			if (seps.IndexOf(this.cur.Text) >= 0)
+			if (seps.indexOf(this.cur.Text) >= 0)
 				throw this.Abort("element required");
 		}
-		while (this.cur.Text.Length > 1 || seps.IndexOf(this.cur.Text) < 0)
+		while (this.cur.Text.length > 1 || seps.indexOf(this.cur.Text) < 0)
 		{
 			var t = this.cur.Text;
 			if (t == "(")
@@ -464,7 +462,7 @@ var Converter = (function()
 			else if (t == "." || this.cur.Type != TokenType.Operator)
 			{
 				this.MoveNext();
-				Debug.Write("{0}", t);
+				Debug.Write(t);
 			}
 			else if (t == "!")
 			{
@@ -581,7 +579,7 @@ var Converter = (function()
 		if (this.cur.Text != "var")
 			throw this.Abort("must be 'var'");
 		this.MoveNext();
-		Debug.Write("for (var {0} in ", this.cur.Text);
+		Debug.Write("for (var " + this.cur.Text + " in ");
 		this.MoveNext();
 		if (this.cur.Text != "in")
 			throw this.Abort("must be 'in'");
@@ -602,7 +600,7 @@ var Converter = (function()
 		this.ReadExpr(false);
 		Debug.WriteLine(")");
 		Debug.Write(this.indent);
-		Debug.WriteLine("{{");
+		Debug.WriteLine("{");
 		if (this.cur.Text != "{")
 			throw this.Abort("must be '{'");
 		this.MoveNext();
@@ -635,13 +633,13 @@ var Converter = (function()
 		}
 		this.MoveNext();
 		Debug.Write(this.indent);
-		Debug.WriteLine("}}");
+		Debug.WriteLine("}");
 	};
 
 	Converter.prototype.ReadCaseBlock = function()
 	{
 		var bak = this.indent;
-		this.indent = this.indent + "	 ";
+		this.indent += spc;
 		while (this.cur.Text != "break" && this.cur.Text != "return" && this.cur.Text != "throw")
 			this.ReadSentence();
 		this.ReadSentence();
@@ -654,7 +652,7 @@ var Converter = (function()
 		if (this.cur.Type != TokenType.Any)
 			throw this.Abort("name required");
 		Debug.Write(this.indent);
-		Debug.Write("var {0} = ", this.cur.Text);
+		Debug.Write("var " + this.cur.Text + " = ");
 		this.MoveNext();
 		if (this.cur.Text != "=")
 			throw this.Abort("must be '='");
@@ -673,7 +671,7 @@ var Converter = (function()
 		while (this.cur.Text != ")")
 		{
 			var tn = this.ReadDecl(true);
-			Debug.Write("{0}", tn.Name);
+			Debug.Write(tn.Name);
 			if (this.cur.Text == ",")
 			{
 				Debug.Write(", ");
@@ -712,7 +710,8 @@ var Converter = (function()
 
 	Converter.prototype.Abort = function(message)
 	{
-		return new Exception(String.Format("[{0}, {1}] {2}: {3}", this.cur.Line, this.cur.Column, message, this.cur.Text));
+		return "[" + this.cur.Line + "," + this.cur.Column + "] " +
+			message + ": " + this.cur.Text;
 	};
 
 	Converter.IsAccess = function(s)

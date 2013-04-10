@@ -31,24 +31,34 @@ class Test2
 <script type="text/javascript" src="lexer.js"></script>
 <script type="text/javascript" src="converter.js"></script>
 <script type="text/javascript">
+var output = "";
+var Debug =
+{
+	Write: function(s) { output += s; },
+	WriteLine: function(s)
+	{
+		if (s) output += s;
+		output += NL;
+	}
+};
 var button1 = document.getElementById("button1");
 var text1 = document.getElementById("text1");
 var text2 = document.getElementById("text2");
 button1.onclick = function()
 {
-	var lexer = new Lexer(text1.value);
+	output = "";
 	try
 	{
+		var lexer = new Lexer(text1.value);
 		var tokens = lexer.ReadAllTokens();
-		var output = "";
-		for (var i = 0; i < tokens.length; i++)
-			output += tokens[i].ToString();
-		text2.value = output;
+		var converter = new Converter(tokens);
+		converter.Convert();
 	}
 	catch (e)
 	{
-		text2.value = e;
+		Debug.WriteLine(e);
 	}
+	text2.value = output;
 };
 </script>
 </body>
