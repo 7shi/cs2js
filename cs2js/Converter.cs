@@ -182,20 +182,20 @@ namespace CsToJs
             Debug.WriteLine("{{");
             this.MoveNext();
             while (this.cur != this.last && this.cur.Text != "}")
-                this.ReadMember("private", false, null);
+                this.ReadMember(false, null);
             this.MoveNext();
             if (!this.isFirst) Debug.WriteLine();
             Debug.WriteLine("    return class;");
             Debug.WriteLine("}})();");
         }
 
-        private void ReadMember(string access, bool isStatic, string opt)
+        private void ReadMember(bool isStatic, string opt)
         {
             var token = this.cur.Text;
             if (token == "static")
             {
                 this.MoveNext();
-                this.ReadMember(access, true, opt);
+                this.ReadMember(true, opt);
             }
             else if (token == "abstract"
                 || token == "virtual"
@@ -206,7 +206,7 @@ namespace CsToJs
             else if (Converter.IsAccess(token))
             {
                 this.MoveNext();
-                this.ReadMember(token, isStatic, opt);
+                this.ReadMember(isStatic, opt);
             }
             else
             {
@@ -214,14 +214,14 @@ namespace CsToJs
                 switch (this.cur.Text)
                 {
                     case "(":
-                        this.ReadMethod(tn.Name, tn.Type, access, isStatic, opt);
+                        this.ReadMethod(tn.Name, tn.Type, isStatic, opt);
                         break;
                     case "=":
                     case ";":
-                        this.ReadField(tn.Name, tn.Type, access, isStatic);
+                        this.ReadField(tn.Name, tn.Type, isStatic);
                         break;
                     case "{":
-                        this.ReadProperty(tn.Name, tn.Type, access, isStatic, opt);
+                        this.ReadProperty(tn.Name, tn.Type, isStatic, opt);
                         break;
                     default:
                         throw this.Abort("syntax error");
@@ -229,17 +229,13 @@ namespace CsToJs
             }
         }
 
-        private void ReadProperty(string name, string t, string access, bool isStatic, string opt)
+        private void ReadProperty(string name, string t, bool isStatic, string opt)
         {
             this.MoveNext();
             while (this.cur.Text != "}")
             {
-                var acc = access;
                 if (Converter.IsAccess(this.cur.Text))
-                {
-                    acc = this.cur.Text;
                     this.MoveNext();
-                }
                 if (this.cur.Text == "get" || this.cur.Text == "set")
                 {
                     var act = this.cur.Text;
@@ -253,7 +249,7 @@ namespace CsToJs
             this.MoveNext();
         }
 
-        private void ReadField(string name, string t, string access, bool isStatic)
+        private void ReadField(string name, string t, bool isStatic)
         {
             var opt = this.cur.Text;
             this.MoveNext();
@@ -271,7 +267,7 @@ namespace CsToJs
                 || t == "uint";
         }
 
-        private void ReadMethod(string name, string t, string access, bool isStatic, string opt)
+        private void ReadMethod(string name, string t, bool isStatic, string opt)
         {
             if (this.isFirst) this.isFirst = false; else Debug.WriteLine();
             Debug.Write("    ");
