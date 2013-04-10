@@ -696,18 +696,18 @@ namespace CsToJs
             this.MoveNext();
             if (this.cur.Text != "{") throw this.Abort("must be '{'");
             this.MoveNext();
-            Debug.Write("[| ");
+            Debug.Write("[ ");
             while (this.cur.Text != "}")
             {
                 this.ReadExpr(true);
                 if (this.cur.Text == ",")
                 {
                     this.MoveNext();
-                    if (this.cur.Text != "}") Debug.Write("; ");
+                    if (this.cur.Text != "}") Debug.Write(", ");
                 }
             }
             this.MoveNext();
-            Debug.Write(" |]");
+            Debug.Write(" ]");
         }
 
         private Exception Abort(string message)
