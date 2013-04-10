@@ -39,7 +39,7 @@ namespace CsToJs
             }
             this.tokens = tokens.Where(delegate(Token t)
             {
-                return !t.CanOmit;
+                return !t.CanOmit();
             }).ToArray();
             this.last = new Token("", TokenType.None, 0, 0);
             if (this.tokens.Length > 0)
@@ -226,8 +226,6 @@ namespace CsToJs
 
         private void ReadProperty(string name, string t, string access, bool isStatic, string opt)
         {
-            var autoField = false;
-            Debug.WriteLine();
             this.MoveNext();
             while (this.cur.Text != "}")
             {
@@ -241,50 +239,8 @@ namespace CsToJs
                 {
                     var act = this.cur.Text;
                     this.MoveNext();
-                    if (this.cur.Text == ";")
-                    {
-                        this.MoveNext();
-                        if (!autoField)
-                        {
-                            this.MakeField("_" + name, t, "private", isStatic, "");
-                            autoField = true;
-                        }
-                    }
-                    Debug.Write("    ");
-                    if (isStatic) Debug.Write("static ");
-                    if (opt == null)
-                        Debug.Write("function");
-                    else if (opt == "abstract")
-                        Debug.Write("virtual");
-                    else
-                        Debug.Write(opt);
-                    Debug.Write(" {0}_{1}", act, name);
-                    if (act == "get")
-                    {
-                        Debug.Write(" : {0}", t);
-                        if (autoField)
-                        {
-                            Debug.WriteLine(" {{ return _{0}; }}", name);
-                        }
-                        else
-                        {
-                            Debug.WriteLine();
-                            this.indent = "    ";
-                            this.ReadBlock();
-                        }
-                    }
-                    else
-                    {
-                        Debug.Write("(value : {0})", t);
-                        if (autoField)
-                            Debug.WriteLine(" {{ _{0} = value; }}", name);
-                        else
-                        {
-                            Debug.WriteLine();
-                            this.indent = "    ";
-                            this.ReadBlock();
-                        }
-                    }
+                    if (this.cur.Text != ";") throw this.Abort("must be auto property");
+                    this.MoveNext();
                 }
                 else
                     throw this.Abort("syntax error");
@@ -296,7 +252,6 @@ namespace CsToJs
         {
             var opt = this.cur.Text;
             this.MoveNext();
-            this.MakeField(name, t, access, isStatic, opt);
         }
 
         public static bool IsPrimitive(string t)
@@ -309,22 +264,6 @@ namespace CsToJs
                 || t == "ushort"
                 || t == "int"
                 || t == "uint";
-        }
-
-        private void MakeField(string name, string t, string access, bool isStatic, string opt)
-        {
-            Debug.Write("    ");
-            if (isStatic) Debug.Write("static ");
-            if (IsPrimitive(t))
-                Debug.Write("{1} {0}", name, t);
-            else
-                Debug.Write("var {0} : {1}", name, t);
-            if (opt == "=")
-            {
-                Debug.Write(" = ");
-                this.ReadExpr(false);
-            }
-            Debug.WriteLine(";");
         }
 
         private void ReadMethod(string name, string t, string access, bool isStatic, string opt)

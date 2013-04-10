@@ -71,15 +71,12 @@ namespace CsToJs
             }
         }
 
-        public bool CanOmit
+        public bool CanOmit()
         {
-            get
-            {
-                return this.Type == TokenType.Space
-                     || this.Type == TokenType.NewLine
-                     || this.Type == TokenType.Comment
-                     || this.Type == TokenType.Comment1;
-            }
+            return this.Type == TokenType.Space
+                 || this.Type == TokenType.NewLine
+                 || this.Type == TokenType.Comment
+                 || this.Type == TokenType.Comment1;
         }
 
         public void Write(TextWriter tw)
