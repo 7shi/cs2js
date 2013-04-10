@@ -78,7 +78,8 @@ namespace CsToJs
                         this.ReadNamespace();
                         break;
                     default:
-                        throw this.Abort("syntax error");
+                        this.ReadNamespaceInternal();
+                        break;
                 }
             }
         }
