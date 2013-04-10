@@ -414,9 +414,9 @@ namespace CsToJs
                 case "throw":
                     this.MoveNext();
                     Debug.Write(this.indent);
-                    Debug.Write("raise(");
+                    Debug.Write("throw ");
                     this.ReadExpr(false);
-                    Debug.WriteLine(");");
+                    Debug.WriteLine(";");
                     break;
                 case "var":
                     this.ReadVar();
