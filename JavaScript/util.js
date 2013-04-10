@@ -5,9 +5,12 @@ function strcmp(a, b)
 	return 0;
 }
 
-function isnum(ch)
+function isnum(s)
 {
-	return "0" <= ch && ch <= "9";
+	for (var i = 0; i < s.length; i++)
+		if (s[i] < "0" || s[i] > "9")
+			return false;
+	return true;
 }
 
 var NL = "\r\n";
