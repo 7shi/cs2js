@@ -75,16 +75,15 @@ var Converter = (function()
 
 	Converter.prototype.ReadUsing = function()
 	{
-		var sw = new StringWriter();
+		var sw = "";
 		this.MoveNext();
 		while (this.cur.Text != ";")
 		{
-			sw.Write(this.cur.Text);
+			sw += this.cur.Text;
 			this.MoveNext();
 		}
 		this.MoveNext();
-		sw.Close();
-		return sw.ToString();
+		return sw;
 	};
 
 	Converter.prototype.ReadNamespace = function()
